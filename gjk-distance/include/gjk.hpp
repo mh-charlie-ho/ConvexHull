@@ -35,10 +35,6 @@ private:
 
     // calculate the shortest distance to the line. Not always the vertical distance.
     Eigen::Vector2f NearestVector(Eigen::Vector2f &sPt, Eigen::Vector2f &ePt);
-
-    void HandleSimplex(ConvexHull &simplex, Eigen::Vector2f &d);
-
-    void LineCase(ConvexHull &simplex, Eigen::Vector2f &d);
-
-    void TriangleCase(ConvexHull &simplex, Eigen::Vector2f &d);
+    
+    void Remover(Convexhull &s);
 };

@@ -143,22 +143,31 @@ void GJK::TriangleCase(ConvexHull &simplex, Eigen::Vector2f &d)
 
 float GJK::Distance()
 {
+    // initialization of the simplex
+    ConvexHull simplex;
+    // initialization of the search vector
     Eigen::Vector2f d(mS2.center - mS1.center);
     d.normalize();
-    // So the vector d is built.
-
-    ConvexHull simplex;
+    
+    // add the first into the simplex
     simplex.vertex.push_back(Support(d)); // 第一個點
-    d << mOrigin - simplex.vertex[0];
+
+    // update the search vector according to the first point.
+    d = mOrigin - simplex.vertex[0];
+    d.normalize();
 
     while (true)
-    {
-        d.normalize();
+    {   
+        Eigen::Vector2f lastp(simplex.vertex[simplex.vertex.size() - 1]);
+        // update the new sopport point according to the search vector
         Eigen::Vector2f p(Support(d)); // 一條線求第三個點/一個點求第二個點
-        if (p == simplex.vertex[simplex.vertex.size() - 1])
-        {
-            return true;
-        }
+        
+        // 檢查新點與上個點相同
+        // if (p == simplex.vertex[simplex.vertex.size() - 1])
+        // {
+        //     return true;
+        // }
+
 
         simplex.vertex.push_back(p);
         HandleSimplex(simplex, d);
