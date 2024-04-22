@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(GJK)
+project(GJK-Distance)
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)

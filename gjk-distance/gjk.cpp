@@ -6,25 +6,6 @@ static Eigen::Vector2f prod(Eigen::Vector2f a, Eigen::Vector2f b)
     return (1 - (a.dot(b) / (a.norm() * b.norm()))) * b;
 }
 
-static float min(float a, float b)
-{
-    if (a >= b)
-    {
-        return a;
-    }
-    return b;
-}
-
-static float minLoop(std::vector<float> v)
-{
-    float ans = v[0];
-    for (int i = 1; i < v.size(); i++)
-    {
-        ans = min(ans, v[i]);
-    }
-    return ans;
-}
-
 GJK::GJK(ConvexHull s1, ConvexHull s2)
     : mS1(s1), mS2(s2), mOrigin(0, 0)
 {
@@ -97,79 +78,58 @@ Eigen::Vector2f GJK::NearestVector(Eigen::Vector2f &sPt, Eigen::Vector2f &ePt)
     }
 }
 
-void GJK::HandleSimplex(ConvexHull &simplex, Eigen::Vector2f &d)
+void GJK::Remover(ConvexHull &s)
 {
-    if (simplex.vertex.size() == 2)
+    if (s.vertex[0].norm() > s.vertex[1].norm())
     {
-        LineCase(simplex, d); // d 修改成朝向原點的向量
-    }
-    TriangleCase(simplex, d);
-}
-
-void GJK::LineCase(ConvexHull &simplex, Eigen::Vector2f &d)
-{
-    // 會進來這區代表 simplex.vertex.size() == 2
-    d = NearestVector(simplex.vertex[0], simplex.vertex[1]);
-}
-
-void GJK::TriangleCase(ConvexHull &simplex, Eigen::Vector2f &d)
-{
-    // 找最近距離以及迭代方向
-    // 目前有三個點
-    Eigen::Vector2f A = NearestVector(simplex.vertex[0], simplex.vertex[1]);
-    Eigen::Vector2f B = NearestVector(simplex.vertex[1], simplex.vertex[2]);
-    Eigen::Vector2f C = NearestVector(simplex.vertex[0], simplex.vertex[2]);
-
-    std::vector<float> minEdge{A.norm(), B.norm(), C.norm()};
-    float edgeD = minLoop(minEdge);
-    if (edgeD == A.norm())
-    {
-        simplex.vertex.pop_back();
-        d = A;
-    }
-    else if (edgeD == B.norm())
-    {
-        simplex.vertex[0] = simplex.vertex[2];
-        simplex.vertex.pop_back();
-        d = B;
+        s.vertex[0] = s.vertex[1];
+        s.vertex.pop_back();
     }
     else
     {
-        simplex.vertex[1] = simplex.vertex[2];
-        simplex.vertex.pop_back();
-        d = C;
+        s.vertex.pop_back();
     }
 }
 
 float GJK::Distance()
 {
-    // initialization of the simplex
     ConvexHull simplex;
+
     // initialization of the search vector
     Eigen::Vector2f d(mS2.center - mS1.center);
     d.normalize();
-    
-    // add the first into the simplex
-    simplex.vertex.push_back(Support(d)); // 第一個點
 
-    // update the search vector according to the first point.
+    simplex.vertex.push_back(Support(d)); // first pt
+
     d = mOrigin - simplex.vertex[0];
     d.normalize();
 
-    while (true)
-    {   
-        Eigen::Vector2f lastp(simplex.vertex[simplex.vertex.size() - 1]);
-        // update the new sopport point according to the search vector
-        Eigen::Vector2f p(Support(d)); // 一條線求第三個點/一個點求第二個點
-        
-        // 檢查新點與上個點相同
-        // if (p == simplex.vertex[simplex.vertex.size() - 1])
-        // {
-        //     return true;
-        // }
-
-
+    Eigen::Vector2f p(Support(d)); // second pt
+    if (p == simplex.vertex[0])
+    {
+        return true;
+    }
+    else
+    {
         simplex.vertex.push_back(p);
-        HandleSimplex(simplex, d);
+    }
+
+    while (true)
+    {
+        d = NearestVector(simplex.vertex[0], simplex.vertex[1]);
+        d.normalize();
+
+        p = Support(d);
+
+        
+        if (p == simplex.vertex[simplex.vertex.size()-1])
+        {
+            return true;
+        }
+        else
+        {
+            Remover(simplex);
+            simplex.vertex.push_back(p);
+        }
     }
 }
