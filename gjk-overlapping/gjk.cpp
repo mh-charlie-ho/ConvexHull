@@ -43,40 +43,26 @@ Eigen::Vector2f GJK::SupportFunciton(
     const ConvexHull &s,
     const Eigen::Vector2f &d)
 {
-    cout << "SupportFunciton" << endl;
     float tempdot = -1; // 單位向量投影最小值為-1
     int supportPtId = 0;
-    cout << s.vertex.size() << endl;
     for (int i = 0; i < s.vertex.size(); i++)
     {
         Eigen::Vector2f v;
-        cout << s.vertex[i][0] << s.vertex[i][1] << endl;
         v << s.vertex[i][0], s.vertex[i][1];
-        // cout << v << "\n" << endl;
         v.normalize();
-        // cout << v << "\n" << endl;
-
-
 
         float dot = d[0] * v[0] + d[1] * v[1];
-        cout << v[0] << v[1] << endl;
-        cout << dot << endl;
         if (tempdot < dot)
         {
             tempdot = dot;
             supportPtId = i;
         }
-
-        cout << "supportPtId" << supportPtId << endl;
     }
-    cout << "---------------------------" << endl;
     return s.vertex[supportPtId];
 }
 
 Eigen::Vector2f GJK::Support(const Eigen::Vector2f &d)
 {
-    cout << d << "\n" << endl;
-    cout << mS2.vertex.size() << endl;
     return (SupportFunciton(mS2, d) - SupportFunciton(mS1, -d));
 }
 
@@ -164,13 +150,8 @@ bool GJK::CollisionCheck()
     while (true)
     {
         d.normalize();
-        cout << d << "\n"
-             << endl;
         Eigen::Vector2f p(Support(d)); // 一條線求第三個點/一個點求第二個點
         
-        cout << "come here" << endl;
-        cout << Support(d) << "\n"
-             << endl;
         if (p == mOrigin)
         {
             return true; // 如果是原點就代表有重疊
