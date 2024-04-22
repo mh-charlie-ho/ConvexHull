@@ -1,30 +1,33 @@
 #include "gjk.hpp"
 #include <cmath>
+#include <iostream>
+
+using namespace std;
 
 static Eigen::Vector2f prod(Eigen::Vector2f a, Eigen::Vector2f b)
 {
     return (1 - (a.dot(b) / (a.norm() * b.norm()))) * b;
 }
 
-GJK::GJK(ConvexHull s1, ConvexHull s2)
+GJK::GJK(const ConvexHull &s1, const ConvexHull &s2)
     : mS1(s1), mS2(s2), mOrigin(0, 0)
 {
 }
 
-GJK::GJK(std::vector<cv::Point2f> s1, std::vector<cv::Point2f> s2)
+GJK::GJK(const std::vector<cv::Point2f> &s1, const std::vector<cv::Point2f> &s2)
     : mOrigin(0, 0)
 {
     mS1 = ConvertFormat(s1);
     mS2 = ConvertFormat(s2);
 }
 
-ConvexHull GJK::ConvertFormat(std::vector<cv::Point2f> points)
+ConvexHull GJK::ConvertFormat(const std::vector<cv::Point2f> &points)
 {
     ConvexHull outputConvexHull;
 
     float xSum = 0;
     float ySum = 0;
-    for (int i = 0; i <= points.size(); i++)
+    for (int i = 0; i < points.size(); i++)
     {
         xSum += points[i].x;
         ySum += points[i].y;
@@ -36,11 +39,12 @@ ConvexHull GJK::ConvertFormat(std::vector<cv::Point2f> points)
     return outputConvexHull;
 }
 
-Eigen::Vector2f GJK::SupportFunciton(ConvexHull s, Eigen::Vector2f d)
+Eigen::Vector2f GJK::SupportFunciton(
+    const ConvexHull &s, const Eigen::Vector2f &d)
 {
-    float tempdot = -1; // 單位向量投影最小值為-1
+    float tempdot = d[0] * s.vertex[0][0] + d[1] * s.vertex[0][1];
     int supportPtId = 0;
-    for (int i = 0; i < s.vertex.size(); i++)
+    for (int i = 1; i < s.vertex.size(); i++)
     {
         float dot = d[0] * s.vertex[i][0] + d[1] * s.vertex[i][1];
         if (tempdot < dot)
@@ -52,12 +56,17 @@ Eigen::Vector2f GJK::SupportFunciton(ConvexHull s, Eigen::Vector2f d)
     return s.vertex[supportPtId];
 }
 
-Eigen::Vector2f GJK::Support(Eigen::Vector2f d)
+Eigen::Vector2f GJK::Support(const Eigen::Vector2f &d)
 {
-    return (SupportFunciton(mS2, d) - SupportFunciton(mS1, -d));
+    cout << "s1: " << SupportFunciton(mS1, d)[0] << ", " << SupportFunciton(mS1, d)[1] << endl;
+    cout << "s2: " << SupportFunciton(mS2, -d)[0] << ", " << SupportFunciton(mS2, -d)[1] << endl;
+
+    return (SupportFunciton(mS1, d) - SupportFunciton(mS2, -d));
 }
 
-Eigen::Vector2f GJK::NearestVector(Eigen::Vector2f &sPt, Eigen::Vector2f &ePt)
+Eigen::Vector2f GJK::NearestVector(
+    const Eigen::Vector2f &sPt,
+    const Eigen::Vector2f &ePt)
 {
     // the vertical vector
     Eigen::Vector2f AO(mOrigin - sPt);
@@ -78,16 +87,26 @@ Eigen::Vector2f GJK::NearestVector(Eigen::Vector2f &sPt, Eigen::Vector2f &ePt)
     }
 }
 
-void GJK::Remover(ConvexHull &s)
+void GJK::Remover(ConvexHull &simplex)
 {
-    if (s.vertex[0].norm() > s.vertex[1].norm())
+    if (simplex.vertex[0].norm() > simplex.vertex[1].norm())
     {
-        s.vertex[0] = s.vertex[1];
-        s.vertex.pop_back();
+        simplex.vertex[0] = simplex.vertex[1];
+        simplex.vertex.pop_back();
     }
     else
     {
-        s.vertex.pop_back();
+        simplex.vertex.pop_back();
+    }
+}
+
+void GJK::PrintSimplex(const ConvexHull &simplex)
+{
+    for (int i = 0; i < simplex.vertex.size(); i++)
+    {
+        printf(
+            "simplex vertex (x, y): %f, %f\n",
+            simplex.vertex[i][0], simplex.vertex[i][1]);
     }
 }
 
@@ -97,39 +116,39 @@ float GJK::Distance()
 
     // initialization of the search vector
     Eigen::Vector2f d(mS2.center - mS1.center);
-    d.normalize();
 
     simplex.vertex.push_back(Support(d)); // first pt
+    PrintSimplex(simplex);
 
     d = mOrigin - simplex.vertex[0];
-    d.normalize();
-
     Eigen::Vector2f p(Support(d)); // second pt
+
     if (p == simplex.vertex[0])
     {
-        return true;
+        cout << "HERE" << endl;
+        return d.norm();
     }
     else
     {
         simplex.vertex.push_back(p);
+        PrintSimplex(simplex);
     }
 
     while (true)
     {
         d = NearestVector(simplex.vertex[0], simplex.vertex[1]);
-        d.normalize();
-
         p = Support(d);
 
-        
-        if (p == simplex.vertex[simplex.vertex.size()-1])
+        if (p == simplex.vertex[simplex.vertex.size() - 1])
         {
-            return true;
+            cout << "THERE" << endl;
+            return d.norm();
         }
         else
         {
             Remover(simplex);
             simplex.vertex.push_back(p);
+            PrintSimplex(simplex);
         }
     }
 }

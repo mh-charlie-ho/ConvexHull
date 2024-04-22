@@ -15,9 +15,9 @@ struct ConvexHull
 class GJK
 {
 public:
-    GJK(ConvexHull s1, ConvexHull s2);
+    GJK(const ConvexHull &s1, const ConvexHull &s2);
 
-    GJK(std::vector<cv::Point2f> s1, std::vector<cv::Point2f> s2);
+    GJK(const std::vector<cv::Point2f> &s1, const std::vector<cv::Point2f> &s2);
 
     float Distance();
 
@@ -27,14 +27,21 @@ private:
 
     Eigen::Vector2f mOrigin;
 
-    ConvexHull ConvertFormat(std::vector<cv::Point2f> points);
+    ConvexHull ConvertFormat(
+        const std::vector<cv::Point2f> &points);
 
-    Eigen::Vector2f SupportFunciton(ConvexHull s, Eigen::Vector2f d);
-
-    Eigen::Vector2f Support(Eigen::Vector2f d);
+    Eigen::Vector2f SupportFunciton(
+        const ConvexHull &s,
+        const Eigen::Vector2f &d);
+    
+    Eigen::Vector2f Support(const Eigen::Vector2f &d);
 
     // calculate the shortest distance to the line. Not always the vertical distance.
-    Eigen::Vector2f NearestVector(Eigen::Vector2f &sPt, Eigen::Vector2f &ePt);
-    
-    void Remover(ConvexHull &s);
+    Eigen::Vector2f NearestVector(
+        const Eigen::Vector2f &sPt,
+        const Eigen::Vector2f &ePt);
+
+    void Remover(ConvexHull &simplex);
+
+    void PrintSimplex(const ConvexHull &simplex);
 };
