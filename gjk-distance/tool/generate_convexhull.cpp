@@ -19,7 +19,7 @@ static float GenerateRandom(float mean = 0, float variance = 3.0)
     return norm(generator);
 }
 
-std::vector<cv::Point2f> GenerateHull(float xMean,float yMean, int num = 10)
+std::vector<cv::Point2f> GenerateHull(float xMean,float yMean, int num = 20)
 {
     std::vector<cv::Point2f> pointSet;
 
