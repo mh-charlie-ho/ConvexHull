@@ -43,15 +43,11 @@ Eigen::Vector2f GJK::SupportFunciton(
     const ConvexHull &s,
     const Eigen::Vector2f &d)
 {
-    float tempdot = -1; // 單位向量投影最小值為-1
+    float tempdot = d[0] * s.vertex[0][0] + d[1] * s.vertex[0][1];
     int supportPtId = 0;
-    for (int i = 0; i < s.vertex.size(); i++)
+    for (int i = 1; i < s.vertex.size(); i++)
     {
-        Eigen::Vector2f v;
-        v << s.vertex[i][0], s.vertex[i][1];
-        v.normalize();
-
-        float dot = d[0] * v[0] + d[1] * v[1];
+        float dot = d[0] * s.vertex[i][0] + d[1] * s.vertex[i][1];
         if (tempdot < dot)
         {
             tempdot = dot;
@@ -151,7 +147,7 @@ bool GJK::CollisionCheck()
     {
         d.normalize();
         Eigen::Vector2f p(Support(d)); // 一條線求第三個點/一個點求第二個點
-        
+
         if (p == mOrigin)
         {
             return true; // 如果是原點就代表有重疊
