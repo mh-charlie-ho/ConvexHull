@@ -3,9 +3,22 @@
 
 using namespace std;
 
-static Eigen::Vector2f prod(Eigen::Vector2f a, Eigen::Vector2f b)
+static Eigen::Vector2f prodLine(Eigen::Vector2f a, Eigen::Vector2f b)
 {
-    return (1 - (a.dot(b) / (a.norm() * b.norm()))) * b;
+    Eigen::Vector3f a3(a[0], a[1], 0);
+    Eigen::Vector3f b3(b[0], b[1], 0);
+    auto result = (a3.cross(b3)).cross(a3);
+    Eigen::Vector2f returnedResult(result[0], result[1]);   
+    return returnedResult;
+}
+
+static Eigen::Vector2f prodTri(Eigen::Vector2f a, Eigen::Vector2f b)
+{
+    Eigen::Vector3f a3(a[0], a[1], 0);
+    Eigen::Vector3f b3(b[0], b[1], 0);
+    auto result = (b3.cross(a3)).cross(a3);
+    Eigen::Vector2f returnedResult(result[0], result[1]);
+    return returnedResult;
 }
 
 GJK::GJK(const ConvexHull &s1, const ConvexHull &s2)
@@ -85,7 +98,7 @@ bool GJK::LineCase(ConvexHull &simplex, Eigen::Vector2f &d)
         return true;
     }
 
-    d = prod(AB, AO);
+    d = prodLine(AB, AO);
 
     return false;
 }
@@ -98,8 +111,8 @@ bool GJK::TriangleCase(ConvexHull &simplex, Eigen::Vector2f &d)
     Eigen::Vector2f AC(simplex.vertex[0] - simplex.vertex[2]);
     Eigen::Vector2f AO(mOrigin - simplex.vertex[2]);
 
-    Eigen::Vector2f ABperp = -1 * prod(AB, AC);
-    Eigen::Vector2f ACperp = -1 * prod(AC, AB);
+    Eigen::Vector2f ABperp = prodTri(AB, AC);
+    Eigen::Vector2f ACperp = prodTri(AC, AB);
 
     if (ABperp.dot(AO) > 0)
     {
@@ -153,7 +166,7 @@ bool GJK::CollisionCheck()
             return true; // 如果是原點就代表有重疊
         }
 
-        if (p.dot(d) < 0) // 第二個點貨第三個點沒有越過原點
+        if (p.dot(d) <= 0) // 第二個點貨第三個點沒有越過原點
         {
             return false;
         }
